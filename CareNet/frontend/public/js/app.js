@@ -1,5 +1,32 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+// Auto-detect API URL: use environment variable or auto-detect from current domain
+const getApiBaseUrl = () => {
+    // For development: http://localhost:8000 frontend talks to http://localhost:5000 backend
+    // For production: same domain serves both frontend and backend
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalhost && window.location.port === '8000') {
+        // Local development: frontend on 8000, backend on 5000
+        return 'http://localhost:5000/api';
+    } else {
+        // Production: same domain for both
+        return window.location.origin + '/api';
+    }
+};
+
+const getSocketUrl = () => {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalhost && window.location.port === '8000') {
+        // Local development
+        return 'http://localhost:5000';
+    } else {
+        // Production: same domain
+        return window.location.origin;
+    }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const TOKEN_KEY = 'carenet_token';
 const USER_KEY = 'carenet_user';
 const ROLE_KEY = 'carenet_role';
@@ -10,6 +37,9 @@ const COMPLETED_TASKS_KEY = 'carenet_completed_tasks';
 const VOLUNTEER_RATINGS_KEY = 'carenet_volunteer_ratings';
 const VOLUNTEER_HISTORY_KEY = 'carenet_volunteer_history';
 const REQUESTS_PAGE_KEY = 'carenet_requests_page';
+const AVAILABLE_TASKS_PAGE_KEY = 'carenet_available_tasks_page';
+const MY_TASKS_PAGE_KEY = 'carenet_my_tasks_page';
+const HISTORY_PAGE_KEY = 'carenet_history_page';
 const ITEMS_PER_PAGE = 5;
 
 function getScopedKey(key) {
@@ -132,6 +162,56 @@ function setCurrentPage(page) {
     localStorage.setItem(REQUESTS_PAGE_KEY, page.toString());
 }
 
+// Pagination helpers for volunteer dashboard
+function getVolunteerPage(pageKey) {
+    const page = localStorage.getItem(pageKey);
+    return page ? parseInt(page) : 1;
+}
+
+function setVolunteerPage(pageKey, page) {
+    localStorage.setItem(pageKey, page.toString());
+}
+
+function getPaginatedItems(items, pageKey) {
+    const currentPage = getVolunteerPage(pageKey);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return {
+        items: items.slice(startIndex, endIndex),
+        currentPage: currentPage,
+        totalPages: Math.ceil(items.length / ITEMS_PER_PAGE),
+        totalItems: items.length
+    };
+}
+
+function renderPaginationButtons(paginationContainerId, pageKey, totalPages) {
+    const container = document.getElementById(paginationContainerId);
+    if (!container) return;
+    
+    const currentPage = getVolunteerPage(pageKey);
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            html += `<button class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold">${i}</button>`;
+        } else {
+            html += `<button onclick="goToVolunteerPage('${pageKey}', ${i})" class="px-4 py-2 border-2 border-emerald-300 text-emerald-600 rounded-lg hover:bg-emerald-50 transition">${i}</button>`;
+        }
+    }
+    
+    container.innerHTML = html;
+}
+
+function goToVolunteerPage(pageKey, page) {
+    setVolunteerPage(pageKey, page);
+    loadVolunteerDashboard();
+}
+
 function getAcceptedTasks() {
     const key = getScopedKey(ACCEPTED_TASKS_KEY);
     const tasks = localStorage.getItem(key);
@@ -193,7 +273,7 @@ function updateUserRequest(requestId, updates) {
 
 // Initialize Socket.IO connection
 function initSocket() {
-    socket = io('http://localhost:5000', {
+    socket = io(getSocketUrl(), {
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
@@ -252,7 +332,10 @@ function showLanding() {
     document.getElementById('landingPage').classList.remove('hidden');
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('dashboardSection').classList.add('hidden');
-    document.getElementById('navbar').classList.add('hidden');
+    document.getElementById('navbar').classList.remove('hidden');
+    document.getElementById('userGreeting').textContent = 'Welcome';
+    document.getElementById('userGreeting').classList.add('hidden');
+    document.getElementById('navLogout').classList.add('hidden');
 }
 
 function showLogin() {
@@ -271,6 +354,8 @@ function showDashboard() {
     // Show navbar greeting
     const user = getCurrentUser();
     document.getElementById('userGreeting').textContent = `Welcome, ${user.username}!`;
+    document.getElementById('userGreeting').classList.remove('hidden');
+    document.getElementById('navLogout').classList.remove('hidden');
     
     loadUserDashboard();
     initSocket();
@@ -380,6 +465,9 @@ function loadFamilyDashboard() {
             paginationDiv.innerHTML = paginationHTML;
         }
     }
+    
+    // Render personal info
+    renderFamilyPersonalInfo();
 }
 
 function goToPage(pageNumber) {
@@ -395,11 +483,15 @@ function loadVolunteerDashboard() {
     // Demo stats
     const acceptedTasks = getAcceptedTasks();
     const userRequests = getUserRequests();
-    const pendingRequests = userRequests.filter(req => req.status === 'pending');
+    const currentUser = getCurrentUser();
+    
+    // Filter pending requests - exclude ones canceled by current volunteer
+    const pendingRequests = userRequests.filter(req => 
+        req.status === 'pending' && (!req.canceled_by || req.canceled_by !== currentUser.username)
+    );
+    
     const totalEarnings = getTotalEarnings();
     const completedTasksCount = getCompletedTasks();
-    
-    const currentUser = getCurrentUser();
     const volunteerRating = getVolunteerAverageRating(currentUser.username);
     
     document.getElementById('statAvailable').textContent = pendingRequests.length;
@@ -407,12 +499,14 @@ function loadVolunteerDashboard() {
     document.getElementById('statRating').textContent = volunteerRating;
     document.getElementById('statTips').textContent = '$' + totalEarnings.toFixed(2);
     
-    // Display pending requests from service users in Available Tasks
+    // Display pending requests from service users in Available Tasks with pagination
     const availableList = document.getElementById('availableTasksList');
     if (pendingRequests.length === 0) {
         availableList.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 text-lg">No tasks available right now</p><p class="text-gray-400">Check back soon when new requests come in!</p></div>';
+        renderPaginationButtons('availableTasksPagination', AVAILABLE_TASKS_PAGE_KEY, 0);
     } else {
-        availableList.innerHTML = pendingRequests.map(request => {
+        const paginated = getPaginatedItems(pendingRequests, AVAILABLE_TASKS_PAGE_KEY);
+        availableList.innerHTML = paginated.items.map(request => {
             const serviceEmoji = request.service_type === 'medical' ? '🏥' : 
                                 request.service_type === 'errands' ? '🛒' : '💬';
             const servicePricing = {
@@ -448,14 +542,17 @@ function loadVolunteerDashboard() {
                 </div>
             `;
         }).join('');
+        renderPaginationButtons('availableTasksPagination', AVAILABLE_TASKS_PAGE_KEY, paginated.totalPages);
     }
     
-    // Display accepted tasks in "My Tasks"
+    // Display accepted tasks in "My Tasks" with pagination
     const myTasksList = document.getElementById('myTasksList');
     if (acceptedTasks.length === 0) {
         myTasksList.innerHTML = '<p class="text-center py-8 text-gray-500">No active tasks</p>';
+        renderPaginationButtons('myTasksPagination', MY_TASKS_PAGE_KEY, 0);
     } else {
-        myTasksList.innerHTML = acceptedTasks.map(task => `
+        const paginated = getPaginatedItems(acceptedTasks, MY_TASKS_PAGE_KEY);
+        myTasksList.innerHTML = paginated.items.map(task => `
             <div class="p-6 border-2 border-green-200 bg-green-50 rounded-lg">
                 <div class="flex justify-between items-start">
                     <div>
@@ -475,9 +572,11 @@ function loadVolunteerDashboard() {
                 </div>
             </div>
         `).join('');
+        renderPaginationButtons('myTasksPagination', MY_TASKS_PAGE_KEY, paginated.totalPages);
     }
 
     renderVolunteerHistory();
+    renderVolunteerPersonalInfo();
 }
 
 function renderVolunteerHistory() {
@@ -487,10 +586,12 @@ function renderVolunteerHistory() {
 
     if (!history || history.length === 0) {
         historyList.innerHTML = '<div class="text-center py-8"><p class="text-gray-500 text-lg">No history yet</p><p class="text-gray-400">Complete tasks or receive tips to see history entries.</p></div>';
+        renderPaginationButtons('historyPagination', HISTORY_PAGE_KEY, 0);
         return;
     }
 
-    historyList.innerHTML = history.map(item => {
+    const paginated = getPaginatedItems(history, HISTORY_PAGE_KEY);
+    historyList.innerHTML = paginated.items.map(item => {
         let desc = '';
         if (item.type === 'completed') {
             desc = `✅ Completed ${item.serviceType} task (Earned $${item.amount.toFixed(2)})`;
@@ -507,6 +608,7 @@ function renderVolunteerHistory() {
             </div>
         `;
     }).join('');
+    renderPaginationButtons('historyPagination', HISTORY_PAGE_KEY, paginated.totalPages);
 }
 
 // ========== ELDERLY DASHBOARD ==========
@@ -664,6 +766,7 @@ function cancelTask(taskId) {
     
     const acceptedTasks = getAcceptedTasks();
     const task = acceptedTasks.find(t => t.id === taskId);
+    const currentUser = getCurrentUser();
     
     // Add volunteer history canceled entry
     if (task) {
@@ -677,11 +780,17 @@ function cancelTask(taskId) {
         });
     }
 
-    // If this task has a request_id, mark the request as pending again
+    // If this task has a request_id, mark the request as canceled with volunteer info
     if (task && task.request_id) {
         const allRequests = getAllRequests();
         const updatedRequests = allRequests.map(req => 
-            req.id === task.request_id ? {...req, status: 'pending'} : req
+            req.id === task.request_id ? {
+                ...req, 
+                status: 'canceled',
+                canceled_by: currentUser.username,
+                canceled_date: new Date().toISOString(),
+                canceled_reason: reason
+            } : req
         );
         setAllRequests(updatedRequests);
     }
@@ -711,11 +820,33 @@ function showRateAndTip(requestId) {
 
     document.getElementById('rateTipModal').classList.remove('hidden');
     document.getElementById('rateTipModal').classList.add('flex');
+    
+    initStarRating();
 }
 
 function closeRateTipModal() {
     document.getElementById('rateTipModal').classList.add('hidden');
     document.getElementById('rateTipModal').classList.remove('flex');
+}
+
+function setStarRating(stars) {
+    document.getElementById('rateTipRating').value = stars;
+    const starBtns = document.querySelectorAll('.star-btn');
+    starBtns.forEach((btn, index) => {
+        if (index < stars) {
+            btn.style.color = '#fcd34d';
+        } else {
+            btn.style.color = '#000000';
+        }
+    });
+}
+
+function initStarRating() {
+    const starBtns = document.querySelectorAll('.star-btn');
+    starBtns.forEach(btn => {
+        btn.style.color = '#000000';
+    });
+    setStarRating(5);
 }
 
 function saveRateTip(event) {
@@ -854,6 +985,134 @@ function cancelRequest(requestId) {
     }
 }
 
+// ========== PERSONAL INFORMATION ==========
+
+function getFamilyPersonalInfo() {
+    const key = getScopedKey('personal_info_family');
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+}
+
+function setFamilyPersonalInfo(info) {
+    const key = getScopedKey('personal_info_family');
+    localStorage.setItem(key, JSON.stringify(info));
+}
+
+function getVolunteerPersonalInfo() {
+    const key = getScopedKey('personal_info_volunteer');
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+}
+
+function setVolunteerPersonalInfo(info) {
+    const key = getScopedKey('personal_info_volunteer');
+    localStorage.setItem(key, JSON.stringify(info));
+}
+
+function editFamilyPersonalInfo() {
+    const existing = getFamilyPersonalInfo();
+    if (existing) {
+        alert('Personal information has been saved and cannot be edited.');
+        return;
+    }
+    document.getElementById('familyPersonalInfoModal').classList.remove('hidden');
+    document.getElementById('familyPersonalInfoModal').classList.add('flex');
+}
+
+function closeFamilyPersonalInfoModal() {
+    document.getElementById('familyPersonalInfoModal').classList.add('hidden');
+    document.getElementById('familyPersonalInfoModal').classList.remove('flex');
+}
+
+function editVolunteerPersonalInfo() {
+    const existing = getVolunteerPersonalInfo();
+    if (existing) {
+        alert('Personal information has been saved and cannot be edited.');
+        return;
+    }
+    document.getElementById('volunteerPersonalInfoModal').classList.remove('hidden');
+    document.getElementById('volunteerPersonalInfoModal').classList.add('flex');
+}
+
+function closeVolunteerPersonalInfoModal() {
+    document.getElementById('volunteerPersonalInfoModal').classList.add('hidden');
+    document.getElementById('volunteerPersonalInfoModal').classList.remove('flex');
+}
+
+function renderFamilyPersonalInfo() {
+    const info = getFamilyPersonalInfo();
+    const container = document.getElementById('familyPersonalInfo');
+    
+    if (!info) {
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <button onclick="editFamilyPersonalInfo()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">
+                    Add Personal Information
+                </button>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Full Name</label>
+                    <p class="text-lg font-semibold text-gray-900">${info.fullName}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Phone</label>
+                    <p class="text-lg text-gray-900">${info.phone}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Email</label>
+                    <p class="text-lg text-gray-900">${info.email}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Address</label>
+                    <p class="text-lg text-gray-900">${info.address}</p>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">ℹ️ Information is saved and cannot be edited</p>
+            </div>
+        `;
+    }
+}
+
+function renderVolunteerPersonalInfo() {
+    const info = getVolunteerPersonalInfo();
+    const container = document.getElementById('volunteerPersonalInfo');
+    
+    if (!info) {
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <button onclick="editVolunteerPersonalInfo()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">
+                    Add Personal Information
+                </button>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Full Name</label>
+                    <p class="text-lg font-semibold text-gray-900">${info.fullName}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Phone</label>
+                    <p class="text-lg text-gray-900">${info.phone}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Email</label>
+                    <p class="text-lg text-gray-900">${info.email}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600">Address</label>
+                    <p class="text-lg text-gray-900">${info.address}</p>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">ℹ️ Information is saved and cannot be edited</p>
+            </div>
+        `;
+    }
+}
+
 // ========== EVENT LISTENERS ==========
 
 document.getElementById('getStartedBtn')?.addEventListener('click', showLogin);
@@ -942,6 +1201,32 @@ document.getElementById('createRequestForm')?.addEventListener('submit', (e) => 
     loadFamilyDashboard();
 });
 
+document.getElementById('familyPersonalInfoForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fullName = document.getElementById('familyFullName').value;
+    const phone = document.getElementById('familyPhone').value;
+    const email = document.getElementById('familyEmail').value;
+    const address = document.getElementById('familyAddress').value;
+    
+    setFamilyPersonalInfo({ fullName, phone, email, address });
+    closeFamilyPersonalInfoModal();
+    renderFamilyPersonalInfo();
+    alert('✅ Personal information saved successfully!');
+});
+
+document.getElementById('volunteerPersonalInfoForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fullName = document.getElementById('volunteerFullName').value;
+    const phone = document.getElementById('volunteerPhone').value;
+    const email = document.getElementById('volunteerEmail').value;
+    const address = document.getElementById('volunteerAddress').value;
+    
+    setVolunteerPersonalInfo({ fullName, phone, email, address });
+    closeVolunteerPersonalInfoModal();
+    renderVolunteerPersonalInfo();
+    alert('✅ Personal information saved successfully!');
+});
+
 // ========== INITIALIZATION ==========
 
 function initApp() {
@@ -954,4 +1239,26 @@ function initApp() {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);
+
+// ========== CROSS-TAB SYNCHRONIZATION ==========
+// Sync data when changes happen in other tabs
+window.addEventListener('storage', (event) => {
+    // Check if the changed key is a CareNet data key
+    if (event.key && event.key.includes('carenet')) {
+        console.log('📡 Syncing data from another tab...', event.key);
+        
+        // Only refresh if user is logged in and in dashboard
+        if (isLoggedIn() && !document.getElementById('landingPage').classList.contains('hidden') === false) {
+            const role = getCurrentRole();
+            
+            // Refresh the appropriate dashboard
+            if (role === 'volunteer') {
+                loadVolunteerDashboard();
+            } else if (role === 'elderly') {
+                loadFamilyDashboard();
+            }
+        }
+    }
+});
+
 

@@ -10,20 +10,26 @@
 <body class="bg-gray-50">
     
     <!-- Navigation Bar -->
-    <nav id="navbar" class="bg-white shadow sticky top-0 z-50 hidden">
+    <nav id="navbar" class="bg-white shadow sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2">
-                    <div class="w-9 h-9 rounded-full bg-emerald-500/20 border-2 border-emerald-300 flex items-center justify-center animate-pulse">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5 text-emerald-600">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-300 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
                         </svg>
                     </div>
                     <span class="text-2xl font-bold text-emerald-600 tracking-tight">CareConnect</span>
                 </div>
+                <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
+                    <a href="#" class="hover:text-emerald-600">About</a>
+                    <a href="#" class="hover:text-emerald-600">Services</a>
+                    <a href="#" class="hover:text-emerald-600">Volunteers</a>
+                    <a href="#" class="hover:text-emerald-600">Contact</a>
+                </div>
                 <div class="flex items-center space-x-4">
-                    <span id="userGreeting" class="text-gray-600"></span>
-                    <button id="navLogout" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Sign Out</button>
+                    <span id="userGreeting" class="text-sm text-gray-600 hidden">Welcome</span>
+                    <button id="navLogout" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition hidden">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -32,19 +38,33 @@
     <!-- Landing Page (Before Login) -->
     <div id="landingPage" class="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50">
         <!-- Hero Section -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-            <div class="text-center mb-16">
-                <div class="flex items-center justify-center gap-3 mb-6 animate-fadeIn">
-                    <div class="w-11 h-11 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-                        </svg>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-28">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 inline-block px-3 py-1 rounded-full border border-emerald-200">Trusted Community</p>
+                    <h1 class="text-5xl lg:text-6xl font-black text-slate-900 leading-tight">Connecting Generations — No One Left Behind</h1>
+                    <p class="text-lg text-slate-600 max-w-xl">A social support network for elderly and volunteers. Fast task matching, secure communication, and real community impact.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="getStartedBtn" class="bg-emerald-600 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-emerald-700 transition">Get Started</button>
+                        <button class="border border-emerald-300 text-emerald-600 px-8 py-3 rounded-full font-semibold hover:bg-emerald-50 transition">Learn More</button>
                     </div>
-                    <h1 class="text-6xl font-bold text-gray-900 mb-0 transform transition hover:scale-105">CareConnect</h1>
+                    <div class="mt-6 grid grid-cols-2 gap-3">
+                        <div class="bg-white border border-emerald-100 rounded-xl p-4 shadow-sm">
+                            <p class="text-xs uppercase tracking-wide font-bold text-emerald-600">Volunteers</p>
+                            <p class="text-2xl font-bold text-slate-900">50+</p>
+                        </div>
+                        <div class="bg-white border border-emerald-100 rounded-xl p-4 shadow-sm">
+                            <p class="text-xs uppercase tracking-wide font-bold text-emerald-600">Requests</p>
+                            <p class="text-2xl font-bold text-slate-900">100+</p>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-2xl text-emerald-600 font-semibold mb-4 opacity-95 hover:opacity-100 transition">"Connecting Generations — No One Left Behind"</p>
-                <p class="text-xl text-gray-600 max-w-2xl mx-auto">A social support network connecting elderly people with enthusiastic volunteers nearby. Fast, safe, and powered by AI.</p>
+                <div class="relative rounded-3xl overflow-hidden border border-emerald-100 shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1200&q=80" alt="Caregiving" class="w-full h-full object-cover min-h-[440px]" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-slate-900/25 to-transparent"></div>
+                </div>
             </div>
+        </div>
 
             <!-- Features -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
@@ -65,12 +85,6 @@
                 </div>
             </div>
 
-            <!-- CTA Button -->
-            <div class="text-center">
-                <button id="getStartedBtn" class="bg-emerald-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-emerald-700 transition transform hover:scale-105">
-                    Get Started
-                </button>
-            </div>
         </div>
     </div>
 
@@ -194,6 +208,47 @@
                     </div>
                 </div>
 
+                <!-- Personal Information -->
+                <div class="bg-white p-8 rounded-lg shadow mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Personal Information</h2>
+                    <div id="familyPersonalInfo" class="space-y-4">
+                        <div class="text-center py-8">
+                            <button onclick="editFamilyPersonalInfo()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">
+                                Add Personal Information
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Info Edit Modal -->
+                <div id="familyPersonalInfoModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+                    <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+                        <h3 class="text-2xl font-bold mb-4">Personal Information</h3>
+                        <form id="familyPersonalInfoForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input id="familyFullName" type="text" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                <input id="familyPhone" type="tel" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input id="familyEmail" type="email" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Address</label>
+                                <input id="familyAddress" type="text" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="closeFamilyPersonalInfoModal()" class="px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Active Requests -->
                 <div class="bg-white p-8 rounded-lg shadow">
                     <h2 class="text-2xl font-bold mb-6">Your Requests</h2>
@@ -233,19 +288,80 @@
                     </div>
                 </div>
 
-                <!-- Available Tasks -->
+                <!-- Personal Information -->
                 <div class="bg-white p-8 rounded-lg shadow mb-8">
-                    <h2 class="text-2xl font-bold mb-6">Available Tasks</h2>
-                    <div id="availableTasksList" class="space-y-4">
+                    <h2 class="text-2xl font-bold mb-6">Personal Information</h2>
+                    <div id="volunteerPersonalInfo" class="space-y-4">
                         <div class="text-center py-8">
-                            <p class="text-gray-500 text-lg">No tasks available right now</p>
-                            <p class="text-gray-400">Check back soon!</p>
+                            <button onclick="editVolunteerPersonalInfo()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">
+                                Add Personal Information
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- My Tasks -->
-                <div class="bg-white p-8 rounded-lg shadow mb-8">
+                <!-- Personal Info Edit Modal for Volunteer -->
+                <div id="volunteerPersonalInfoModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4">
+                    <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+                        <h3 class="text-2xl font-bold mb-4">Personal Information</h3>
+                        <form id="volunteerPersonalInfoForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input id="volunteerFullName" type="text" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                <input id="volunteerPhone" type="tel" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input id="volunteerEmail" type="email" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Address</label>
+                                <input id="volunteerAddress" type="text" class="w-full p-2 border border-gray-300 rounded-lg" required />
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="closeVolunteerPersonalInfoModal()" class="px-4 py-2 rounded-lg border border-gray-300">Cancel</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Main Content: Available Tasks & History Side-by-Side -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                    <!-- Available Tasks (Left - 2 columns) -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white p-8 rounded-lg shadow">
+                            <h2 class="text-2xl font-bold mb-6">Available Tasks</h2>
+                            <div id="availableTasksList" class="space-y-4">
+                                <div class="text-center py-8">
+                                    <p class="text-gray-500 text-lg">No tasks available right now</p>
+                                    <p class="text-gray-400">Check back soon!</p>
+                                </div>
+                            </div>
+                            <div id="availableTasksPagination" class="mt-6 flex justify-center gap-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- History (Right - 1 column) -->
+                    <div>
+                        <div class="bg-white p-8 rounded-lg shadow">
+                            <h2 class="text-2xl font-bold mb-6">History</h2>
+                            <div id="volunteerHistoryList" class="space-y-4">
+                                <div class="text-center py-8">
+                                    <p class="text-gray-500 text-lg">No history yet</p>
+                                    <p class="text-gray-400">Complete tasks or receive tips to see history entries.</p>
+                                </div>
+                            </div>
+                            <div id="historyPagination" class="mt-6 flex justify-center gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Tasks (Full Width Below) -->
+                <div class="bg-white p-8 rounded-lg shadow">
                     <h2 class="text-2xl font-bold mb-6">My Tasks</h2>
                     <div id="myTasksList" class="space-y-4">
                         <div class="text-center py-8">
@@ -253,17 +369,7 @@
                             <p class="text-gray-400">Accept tasks from available list</p>
                         </div>
                     </div>
-                </div>
-
-                <!-- Volunteer History -->
-                <div class="bg-white p-8 rounded-lg shadow">
-                    <h2 class="text-2xl font-bold mb-6">History</h2>
-                    <div id="volunteerHistoryList" class="space-y-4">
-                        <div class="text-center py-8">
-                            <p class="text-gray-500 text-lg">No history yet</p>
-                            <p class="text-gray-400">Complete tasks or receive tips to see history entries.</p>
-                        </div>
-                    </div>
+                    <div id="myTasksPagination" class="mt-6 flex justify-center gap-2"></div>
                 </div>
             </div>
 
@@ -358,8 +464,15 @@
             <form id="rateTipForm" class="space-y-4">
                 <input type="hidden" id="rateTipRequestId" />
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Rating (1-5)</label>
-                    <input id="rateTipRating" type="number" min="1" max="5" value="5" class="w-full p-2 border border-gray-300 rounded-lg" />
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Rating</label>
+                    <div class="flex gap-2 text-3xl" id="starRatingContainer">
+                        <button type="button" onclick="setStarRating(1)" class="star-btn cursor-pointer transition" data-star="1">★</button>
+                        <button type="button" onclick="setStarRating(2)" class="star-btn cursor-pointer transition" data-star="2">★</button>
+                        <button type="button" onclick="setStarRating(3)" class="star-btn cursor-pointer transition" data-star="3">★</button>
+                        <button type="button" onclick="setStarRating(4)" class="star-btn cursor-pointer transition" data-star="4">★</button>
+                        <button type="button" onclick="setStarRating(5)" class="star-btn cursor-pointer transition" data-star="5">★</button>
+                    </div>
+                    <input type="hidden" id="rateTipRating" value="5" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tip Amount (USD)</label>
