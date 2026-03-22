@@ -808,7 +808,10 @@ function loadFamilyDashboard() {
                     </div>
                     <p class="text-sm text-gray-600">📅 ${new Date(req.preferred_date).toLocaleDateString('en-US', {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</p>
                     <div class="flex gap-2 mt-3">
-                        ${req.status === 'completed' ? `<button onclick="showRateAndTip('${req.id}')" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 font-semibold transition">Rate & Tip</button>` : ''}
+                        ${req.status === 'completed' && req.volunteer_username ? `
+                            <button onclick="viewPerformer('${req.id}')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold transition">👤 View Performer</button>
+                            <button onclick="showRateAndTip('${req.id}')" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 font-semibold transition">Rate & Tip</button>
+                        ` : ''}
                         ${req.status === 'pending' ? `
                             <button onclick="editRequest('${req.id}')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold transition">Edit</button>
                             <button onclick="cancelRequest('${req.id}')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 font-semibold transition">Cancel</button>
@@ -1167,6 +1170,7 @@ function detailRequest(requestId) {
 
     // Get user info for this request
     const userPersonalInfo = getFamilyPersonalInfoByUsername(request.elderly_username);
+    const userHealthProfile = getHealthProfile(request.elderly_username);
 
     const modal = document.getElementById('requestDetailModal');
     const content = document.getElementById('requestDetailContent');
@@ -1177,6 +1181,88 @@ function detailRequest(requestId) {
     const statusColor = request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                        request.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                        'bg-green-100 text-green-800';
+
+    let healthProfileSection = '';
+    if (userHealthProfile) {
+        const riskLevel = userHealthProfile.fallRisk || userHealthProfile.mobilityIssues || userHealthProfile.cognitiveIssues ? 'High Risk' : 'Low Risk';
+        const riskColor = riskLevel === 'High Risk' ? 'text-red-600 bg-red-100' : 'text-green-600 bg-green-100';
+
+        healthProfileSection = `
+            <!-- Health Profile -->
+            <div class="bg-red-50 p-6 rounded-lg border border-red-200">
+                <h3 class="text-lg font-semibold mb-4 text-red-900">📋 Health Profile</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Age</p>
+                        <p class="text-gray-900">${userHealthProfile.age || 'Not specified'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Blood Type</p>
+                        <p class="text-gray-900">${userHealthProfile.bloodType || 'Not specified'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Risk Level</p>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${riskColor}">${riskLevel}</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Recent Hospitalization</p>
+                        <p class="text-gray-900">${userHealthProfile.recentHospitalization ? 'Yes' : 'No'}</p>
+                    </div>
+                </div>
+                
+                ${userHealthProfile.conditions && userHealthProfile.conditions.length > 0 ? `
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-700 mb-2">🏥 Chronic Conditions</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${userHealthProfile.conditions.map(condition => `<span class="px-2 py-1 bg-red-200 text-red-800 text-xs rounded-full">${condition}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${userHealthProfile.medications && userHealthProfile.medications.length > 0 ? `
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-700 mb-2">💊 Current Medications</p>
+                    <div class="space-y-1">
+                        ${userHealthProfile.medications.map(med => `<p class="text-sm text-gray-900">• ${med.name} - ${med.dosage}</p>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${userHealthProfile.allergies && userHealthProfile.allergies.length > 0 ? `
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-700 mb-2">⚠️ Allergies</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${userHealthProfile.allergies.map(allergy => `<span class="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full">${allergy}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div>
+                    <p class="text-sm font-medium text-gray-700 mb-2">🚫 Physical & Cognitive Limitations</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div class="flex items-center">
+                            <span class="${userHealthProfile.mobilityIssues ? 'text-red-600' : 'text-green-600'}">• Mobility Issues: ${userHealthProfile.mobilityIssues ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="${userHealthProfile.fallRisk ? 'text-red-600' : 'text-green-600'}">• Fall Risk: ${userHealthProfile.fallRisk ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="${userHealthProfile.cognitiveIssues ? 'text-red-600' : 'text-green-600'}">• Cognitive Issues: ${userHealthProfile.cognitiveIssues ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        healthProfileSection = `
+            <!-- No Health Profile -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900">📋 Health Profile</h3>
+                <p class="text-gray-600">No health profile available for this user.</p>
+                <p class="text-sm text-gray-500 mt-2">Health information helps provide better care.</p>
+            </div>
+        `;
+    }
 
     content.innerHTML = `
         <div class="space-y-6">
@@ -1237,6 +1323,8 @@ function detailRequest(requestId) {
                     </div>
                 </div>
             </div>
+
+            ${healthProfileSection}
         </div>
     `;
 
@@ -1360,6 +1448,89 @@ function showRateAndTip(requestId) {
 function closeRateTipModal() {
     document.getElementById('rateTipModal').classList.add('hidden');
     document.getElementById('rateTipModal').classList.remove('flex');
+}
+
+function viewPerformer(requestId) {
+    const userRequests = getUserRequests();
+    const request = userRequests.find(req => req.id === requestId);
+
+    if (!request) {
+        alert('❌ Request not found');
+        return;
+    }
+
+    if (!request.volunteer_username) {
+        alert('❌ No volunteer assigned to this request');
+        return;
+    }
+
+    // Get volunteer personal info
+    const volunteerInfo = getVolunteerPersonalInfoByUsername(request.volunteer_username);
+    const volunteerRating = getVolunteerAverageRating(request.volunteer_username);
+    const completedTasks = getCompletedTasksForVolunteer(request.volunteer_username);
+
+    const modal = document.getElementById('viewPerformerModal');
+    const content = document.getElementById('performerInfoContent');
+
+    content.innerHTML = `
+        <div class="space-y-4">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 class="text-lg font-semibold text-blue-900 mb-3">👤 Personal Information</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Full Name</p>
+                        <p class="text-gray-900">${volunteerInfo?.fullName || request.volunteer_username || 'Not provided'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Age</p>
+                        <p class="text-gray-900">${volunteerInfo?.age || 'Not provided'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Gender</p>
+                        <p class="text-gray-900">${volunteerInfo?.gender || 'Not provided'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Phone</p>
+                        <p class="text-gray-900">${volunteerInfo?.phone || 'Not provided'}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Email</p>
+                        <p class="text-gray-900">${volunteerInfo?.email || 'Not provided'}</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <p class="text-sm font-medium text-gray-700">Address</p>
+                        <p class="text-gray-900">${volunteerInfo?.address || 'Not provided'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 class="text-lg font-semibold text-green-900 mb-3">📊 Performance Stats</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600">${volunteerRating}</p>
+                        <p class="text-sm text-gray-600">⭐ Average Rating</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600">${completedTasks}</p>
+                        <p class="text-sm text-gray-600">✅ Tasks Completed</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600">${request.volunteer_rating || 'N/A'}</p>
+                        <p class="text-sm text-gray-600">⭐ Your Rating</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeViewPerformerModal() {
+    document.getElementById('viewPerformerModal').classList.add('hidden');
+    document.getElementById('viewPerformerModal').classList.remove('flex');
 }
 
 function setStarRating(stars) {

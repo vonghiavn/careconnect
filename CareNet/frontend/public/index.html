@@ -874,6 +874,19 @@
         </div>
     </div>
 
+    <!-- View Performer Modal -->
+    <div id="viewPerformerModal" class="fixed inset-0 z-50 bg-black/50 hidden items-center justify-center p-4 animate-fadeIn">
+        <div class="bg-white p-8 rounded-lg w-full max-w-lg shadow-lg animate-bounceIn">
+            <h3 class="text-2xl font-bold mb-6 text-gray-900">👤 Performer Information</h3>
+            <div id="performerInfoContent" class="space-y-4">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" onclick="closeViewPerformerModal()" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Health Observation Modal -->
     <div id="addObservationModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 animate-fadeIn">
         <div class="bg-white p-8 rounded-lg w-full max-w-lg shadow-lg animate-bounceIn">
