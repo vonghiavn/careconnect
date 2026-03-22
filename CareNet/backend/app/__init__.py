@@ -25,13 +25,14 @@ def create_app(config_name=None):
     CORS(app)
     
     # Register blueprints
-    from app.routes import auth_bp, users_bp, requests_bp, payments_bp, notifications_bp
+    from app.routes import auth_bp, users_bp, requests_bp, payments_bp, notifications_bp, health_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(requests_bp)
     app.register_blueprint(payments_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(health_bp)
     
     # Create tables
     with app.app_context():

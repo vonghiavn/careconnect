@@ -143,3 +143,23 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref='notifications')
+
+class HealthRiskLog(db.Model):
+    """Health risk assessment logs from AI monitoring."""
+    __tablename__ = 'health_risk_logs'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    elderly_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    service_completion_id = db.Column(db.String(36), db.ForeignKey('service_completions.id'), nullable=True)
+    risk_level = db.Column(db.String(20), nullable=False)  # 'low', 'medium', 'high'
+    detected_issues = db.Column(db.JSON, nullable=True)  # List of detected health concerns
+    recommended_actions = db.Column(db.JSON, nullable=True)  # List of recommendations
+    specialist_recommended = db.Column(db.String(100), nullable=True)  # Type of specialist (e.g., 'cardiologist')
+    alert_sent = db.Column(db.Boolean, default=False)
+    notified_family = db.Column(db.Boolean, default=False)
+    volume_notes = db.Column(db.Text, nullable=True)  # Original volunteer notes
+    ai_analysis = db.Column(db.Text, nullable=True)  # Full AI analysis
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    elderly = db.relationship('User', foreign_keys=[elderly_id])
+    service_completion = db.relationship('ServiceCompletion')
